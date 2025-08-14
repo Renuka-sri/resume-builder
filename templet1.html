@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Resume Builder — Modern Photo Style</title>
+
+<!-- Google Fonts similar to modern resume -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- html2pdf for PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+  :root{
+    --accent:#2b86c8;       /* light-blue accent */
+    --sidebar:#0f3140;      /* dark sidebar color */
+    --muted:#6b7a86;
+    --paper:#ffffff;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family: "Montserrat", sans-serif;
+    background:#eef7ff;
+    color:#16303a;
+  }
+
+  /* Outer layout: form (left) + preview (right) */
+  .wrap{
+    display:flex;
+    gap:18px;
+    padding:18px;
+    height:calc(100vh - 36px);
+  }
+
+  /* LEFT: form panel */
+  .panel {
+    width:36%;
+    min-width:320px;
+    max-width:480px;
+    background:#ffffff;
+    border-radius:var(--radius);
+    padding:18px;
+    overflow:auto;
+    box-shadow:0 6px 22px rgba(10,30,60,0.09);
+  }
+  .panel h2{
+    margin:6px 0 12px;
+    color:var(--accent);
+    font-size:18px;
+  }
+  .field{
+    margin-bottom:10px;
+  }
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600}
+  input[type="text"], input[type="email"], input[type="url"], input[type="tel"], textarea, select {
+    width:100%;
+    padding:8px 10px;
+    border-radius:6px;
+    border:1px solid #d6e6f4;
+    font-size:14px;
+    background:#fbfdff;
+  }
+  textarea{min-height:70px; resize:vertical}
+  .small-row{display:flex;gap:8px}
+  .small-row input{flex:1}
+
+  button { background:var(--accent); color:white; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; font-weight:600}
+  .muted-btn { background:#f0f6fb; color:var(--accent); border:1px solid #d8eaf8 }
+
+  .section-title{margin:14px 0 8px; font-weight:700; color:#14405a}
+
+  /* Add / remove line controls */
+  .list-item { background:#fbfdff; padding:10px; border-radius:8px; border:1px solid #eef6fb; margin-bottom:8px; position:relative }
+  .list-item .remove-btn { position:absolute; right:8px; top:8px; background:transparent; color:#e04b4b; border:none; cursor:pointer; font-weight:700 }
+
+  /* RIGHT: resume preview */
+  .preview-wrap { width:64%; padding:20px; overflow:auto }
+  .paper {
+    width:842px; /* A4 px at 96dpi approx for on-screen */
+    max-width:100%;
+    margin: 0 auto;
+    background:var(--paper);
+    border-radius:8px;
+    display:flex;
+    overflow:hidden;
+    box-shadow:0 6px 30px rgba(10,30,60,0.08);
+    border:1px solid #e6f2fb;
+  }
+
+  /* Sidebar and main columns inside resume */
+  .sidebar {
+    width:280px;
+    background:var(--sidebar);
+    color:#fff;
+    padding:26px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .photo {
+    width:110px; height:110px; border-radius:8px; background:#123; overflow:hidden; border:3px solid rgba(255,255,255,0.08)
+  }
+  .photo img{width:100%;height:100%;object-fit:cover;display:block}
+
+  .name { font-size:22px; font-weight:700; margin-top:6px; color:#fff; }
+  .role { font-size:13px; color:rgba(255,255,255,0.85); margin-top:4px }
+  .contact { font-size:13px; color:rgba(255,255,255,0.9); line-height:1.5; }
+  .divider { height:1px;background:rgba(255,255,255,0.06); margin:6px 0 10px; border-radius:2px }
+
+  .side-section h4{ font-size:12px; margin:0 0 6px; color:rgba(255,255,255,0.9); letter-spacing:0.6px }
+  .skill-chip { background:rgba(255,255,255,0.08); padding:6px 8px; border-radius:6px; display:inline-block; font-size:13px; margin:6px 6px 6px 0 }
+  .interest-chip { background:rgba(255,255,255,0.12); padding:6px 8px; border-radius:6px; display:inline-block; font-size:13px; margin:6px 6px 6px 0; font-style: italic; }
+  .language-chip { background:rgba(255,255,255,0.15); padding:6px 8px; border-radius:6px; display:inline-block; font-size:13px; margin:6px 6px 6px 0; font-weight: 600; }
+
+  /* Right main content */
+  .main {
+    flex:1;
+    padding:28px;
+  }
+  .main-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px }
+  .main h2{ margin:0; color:var(--accent); font-size:18px; font-weight:700; }
+  .summary { margin-top:10px; color:#243a47; line-height:1.45 }
+  .section { margin-top:18px }
+  .section h3 { font-family:"Roboto Slab", serif; color:#0e3c57; margin-bottom:8px; font-size:16px }
+  .job { margin-bottom:12px }
+  .job .title { font-weight:700; color:#15394c }
+  .job .meta { color:var(--muted); font-size:13px; margin-bottom:6px }
+  .edu { margin-bottom:12px }
+  .bullet { margin:6px 0; color:#2d4752; }
+
+  /* print friendly */
+  @media print {
+    body { background:white }
+    .wrap { padding:0 }
+    .panel { display:none }
+    .paper { box-shadow:none; border:0 }
+  }
+
+  /* responsive */
+  @media (max-width:1000px){
+    .wrap{ flex-direction:column; align-items:stretch; height:auto }
+    .panel{ width:100%; max-height:360px }
+    .preview-wrap{ width:100% }
+    .paper{ width:100% }
+  }
+
+  /* Media query for tablets and mobile */
+@media (max-width: 1024px) {
+  .wrap {
+    flex-direction: column;
+    height: auto; /* allow content to grow vertically */
+  }
+  
+  .panel {
+    width: 100%;
+    max-width: 100%;
+    min-width: auto;
+    max-height: none;
+  }
+
+  .preview-wrap {
+    width: 100%;
+    padding: 0; /* optional: remove side padding for full width */
+    margin-top: 18px; /* space between form and preview */
+  }
+
+  .paper {
+    width: 100%;
+    border-radius: 0; /* optional: full width on small screens */
+  }
+}
+
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- LEFT: Form Panel -->
+  <div class="panel" aria-label="Form panel">
+    <h2>Resume Form</h2>
+
+    <!-- Personal -->
+    <div class="field">
+      <label>Profile Photo</label>
+      <input type="file" id="photoInput" accept="image/*">
+    </div>
+
+    <div class="field">
+      <label>Full name</label>
+      <input id="nameInput" type="text" placeholder="e.g. John Doe">
+    </div>
+
+    <div class="small-row">
+      <div style="flex:1" class="field">
+        <label>Job title</label>
+        <input id="titleInput" type="text" placeholder="e.g. Product Designer">
+      </div>
+      <div style="width:120px" class="field">
+        <label>Years</label>
+        <input id="yearsInput" type="text" placeholder="e.g. 5y">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Email</label>
+      <input id="emailInput" type="email" placeholder="you@example.com">
+    </div>
+    <div class="field">
+      <label>Phone</label>
+      <input id="phoneInput" type="tel" placeholder="+91 98765 43210">
+    </div>
+    <div class="field">
+      <label>Location</label>
+      <input id="locationInput" type="text" placeholder="City, Country">
+    </div>
+
+    <div class="section-title">About</div>
+    <div class="field">
+      <textarea id="summaryInput" placeholder="Short professional summary..."></textarea>
+    </div>
+
+    <!-- Skills -->
+    <div class="section-title">Skills</div>
+    <div id="skillsList"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input id="skillNew" type="text" placeholder="Add skill e.g. React" />
+      <button type="button" onclick="addSkill()">Add</button>
+    </div>
+
+    <!-- Interests -->
+    <div class="section-title">Interests</div>
+    <div id="interestsList"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input id="interestNew" type="text" placeholder="Add interest e.g. Photography" />
+      <button type="button" onclick="addInterest()">Add</button>
+    </div>
+
+    <!-- Languages -->
+    <div class="section-title">Languages Known</div>
+    <div id="languagesList"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input id="languageNew" type="text" placeholder="Add language e.g. English" />
+      <button type="button" onclick="addLanguage()">Add</button>
+    </div>
+
+    <!-- Experience -->
+    <div class="section-title">Experience</div>
+    <div id="expList"></div>
+    <div style="margin-top:8px">
+      <button class="muted-btn" onclick="addExperience()">+ Add Experience</button>
+    </div>
+  
+
+    <!-- Education -->
+    <div class="section-title">Education</div>
+    <div id="eduList"></div>
+    <div style="margin-top:8px">
+      <button class="muted-btn" onclick="addEducation()">+ Add Education</button>
+    </div>
+    
+    <div style="margin-top:16px; display:flex; gap:10px;">
+      <button onclick="downloadPDF()">Download PDF</button>
+      <button class="muted-btn" onclick="resetPreview()">Reset</button>
+    </div>
+
+    <div style="height:40px"></div><!-- bottom spacing -->
+  </div>
+
+  <!-- RIGHT: Preview -->
+  <div class="preview-wrap">
+    <div class="paper" id="paper">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="photo" id="photoPreview"><img src="" alt="" id="photoImg" style="display:none"></div>
+          <div>
+            <div class="name" id="namePreview">Your Name</div>
+            <div class="role" id="rolePreview">Job Title</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.85)" id="yearsPreview">5 years</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="side-section">
+          <h4>Contact</h4>
+          <div class="contact" id="contactPreview">
+            your.email@example.com<br>
+            +91 98765 43210<br>
+            City, Country
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="side-section">
+          <h4>Skills</h4>
+          <div id="skillsPreview"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="side-section">
+          <h4>Interests</h4>
+          <div id="interestsPreview"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="side-section">
+          <h4>Languages</h4>
+          <div id="languagesPreview"></div>
+        </div>
+
+      </aside>
+
+      <!-- Main content -->
+      <main class="main">
+        <div class="main-head">
+          <div>
+            <h2 id="headlinePreview">Profile</h2>
+          </div>
+        </div>
+
+        <div class="summary" id="summaryPreview">A short professional summary will show here. It outlines your main strengths, experience and what you do — concise & impactful.</div>
+
+        <div class="section" id="experiencePreviewBlock">
+          <h3>Experience</h3>
+          <div id="experiencePreview"></div>
+        </div>
+
+        <div class="section" id="educationPreviewBlock">
+          <h3>Education</h3>
+          <div id="educationPreview"></div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ---------- Utilities ---------- */
+function $(id){ return document.getElementById(id) }
+
+/* ---------- Live preview fields ---------- */
+const mappingInputs = [
+  ['nameInput','namePreview'],
+  ['titleInput','rolePreview'],
+  ['yearsInput','yearsPreview'],
+  ['summaryInput','summaryPreview'],
+  ['emailInput','contactPreview'],
+  ['phoneInput','contactPreview'],
+  ['locationInput','contactPreview']
+];
+
+/* Update composite contact (email/phone/location) */
+function refreshContact(){
+  const email = $('emailInput').value.trim();
+  const phone = $('phoneInput').value.trim();
+  const loc = $('locationInput').value.trim();
+  const parts = [];
+  if(email) parts.push(email);
+  if(phone) parts.push(phone);
+  if(loc) parts.push(loc);
+  $('contactPreview').innerHTML = parts.join('<br>') || 'your.email@example.com<br>+91 98765 43210<br>City, Country';
+}
+
+/* Generic input -> preview updates */
+['nameInput','titleInput','yearsInput','summaryInput','emailInput','phoneInput','locationInput'].forEach(id=>{
+  $(id).addEventListener('input', ()=>{
+    if(id==='summaryInput') $('summaryPreview').textContent = $(id).value || 'A short professional summary will show here. It outlines your main strengths, experience and what you do — concise & impactful.';
+    else if(id==='nameInput') $('namePreview').textContent = $(id).value || 'Your Name';
+    else if(id==='titleInput') $('rolePreview').textContent = $(id).value || 'Job Title';
+    else if(id==='yearsInput') $('yearsPreview').textContent = $(id).value || '5 years';
+    else refreshContact();
+  });
+});
+
+/* ---------- Photo upload ---------- */
+$('photoInput').addEventListener('change', (ev)=>{
+  const f = ev.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = function(e){
+    const src = e.target.result;
+    $('photoImg').src = src;
+    $('photoImg').style.display = 'block';
+    $('photoPreview').style.background = 'transparent';
+  }
+  r.readAsDataURL(f);
+});
+
+/* ---------- Skills (dynamic) ---------- */
+function addSkill(name){
+  const container = $('skillsList');
+  const value = name || $('skillNew').value.trim();
+  if(!value) return;
+  const item = document.createElement('div');
+  item.className = 'list-item';
+  item.innerHTML = `<div style="display:flex;align-items:center;gap:8px">
+      <div style="flex:1"><input type="text" class="skillField" value="${escapeHtml(value)}" oninput="renderSkills()" /></div>
+      <button class="remove-btn" onclick="this.parentElement.parentElement.remove(); renderSkills()">✕</button>
+    </div>`;
+  container.appendChild(item);
+  $('skillNew').value = '';
+  renderSkills();
+}
+
+function renderSkills(){
+  const nodes = document.querySelectorAll('#skillsList .skillField');
+  const out = $('skillsPreview');
+  out.innerHTML = '';
+  nodes.forEach(n=>{
+    if(n.value.trim()){
+      const chip = document.createElement('span');
+      chip.className = 'skill-chip';
+      chip.textContent = n.value.trim();
+      out.appendChild(chip);
+    }
+  });
+}
+
+/* ---------- Interests (dynamic) ---------- */
+function addInterest(name){
+  const container = $('interestsList');
+  const value = name || $('interestNew').value.trim();
+  if(!value) return;
+  const item = document.createElement('div');
+  item.className = 'list-item';
+  item.innerHTML = `<div style="display:flex;align-items:center;gap:8px">
+      <div style="flex:1"><input type="text" class="interestField" value="${escapeHtml(value)}" oninput="renderInterests()" /></div>
+      <button class="remove-btn" onclick="this.parentElement.parentElement.remove(); renderInterests()">✕</button>
+    </div>`;
+  container.appendChild(item);
+  $('interestNew').value = '';
+  renderInterests();
+}
+
+function renderInterests(){
+  const nodes = document.querySelectorAll('#interestsList .interestField');
+  const out = $('interestsPreview');
+  out.innerHTML = '';
+  nodes.forEach(n=>{
+    if(n.value.trim()){
+      const chip = document.createElement('span');
+      chip.className = 'interest-chip';
+      chip.textContent = n.value.trim();
+      out.appendChild(chip);
+    }
+  });
+}
+
+/* ---------- Languages (dynamic) ---------- */
+function addLanguage(name){
+  const container = $('languagesList');
+  const value = name || $('languageNew').value.trim();
+  if(!value) return;
+  const item = document.createElement('div');
+  item.className = 'list-item';
+  item.innerHTML = `<div style="display:flex;align-items:center;gap:8px">
+      <div style="flex:1"><input type="text" class="languageField" value="${escapeHtml(value)}" oninput="renderLanguages()" /></div>
+      <button class="remove-btn" onclick="this.parentElement.parentElement.remove(); renderLanguages()">✕</button>
+    </div>`;
+  container.appendChild(item);
+  $('languageNew').value = '';
+  renderLanguages();
+}
+
+function renderLanguages(){
+  const nodes = document.querySelectorAll('#languagesList .languageField');
+  const out = $('languagesPreview');
+  out.innerHTML = '';
+  nodes.forEach(n=>{
+    if(n.value.trim()){
+      const chip = document.createElement('span');
+      chip.className = 'language-chip';
+      chip.textContent = n.value.trim();
+      out.appendChild(chip);
+    }
+  });
+}
+
+/* ---------- Experience (dynamic multi-field) ---------- */
+function addExperience(obj){
+  const container = $('expList');
+  const defaultObj = obj || {title:'',company:'',period:'',desc:''};
+  const div = document.createElement('div');
+  div.className = 'list-item';
+  div.innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input type="text" placeholder="Title (e.g. Senior Dev)" class="exp-title" value="${escapeHtml(defaultObj.title)}" oninput="renderExperience()" />
+      <input type="text" placeholder="Company" class="exp-company" value="${escapeHtml(defaultObj.company)}" oninput="renderExperience()" />
+      <input type="text" placeholder="Period (e.g. 2020–2023)" class="exp-period" value="${escapeHtml(defaultObj.period)}" oninput="renderExperience()" />
+      <textarea placeholder="Short description" class="exp-desc" oninput="renderExperience()">${escapeHtml(defaultObj.desc)}</textarea>
+      <button class="remove-btn" onclick="this.parentElement.parentElement.remove(); renderExperience()">✕</button>
+    </div>`;
+  container.appendChild(div);
+  renderExperience();
+}
+
+function renderExperience(){
+  const container = $('experiencePreview');
+  container.innerHTML = '';
+  document.querySelectorAll('#expList .list-item').forEach(node=>{
+    const t = node.querySelector('.exp-title').value.trim();
+    const c = node.querySelector('.exp-company').value.trim();
+    const p = node.querySelector('.exp-period').value.trim();
+    const d = node.querySelector('.exp-desc').value.trim();
+    const el = document.createElement('div');
+    el.className = 'job';
+    el.innerHTML = `<div class="title">${escapeHtml(t || 'Job Title')}</div>
+                    <div class="meta">${escapeHtml(c)} • ${escapeHtml(p)}</div>
+                    <div class="bullet">${escapeHtml(d)}</div>`;
+    container.appendChild(el);
+  });
+}
+
+/* ---------- Education (dynamic) ---------- */
+function addEducation(obj){
+  const container = $('eduList');
+  const defaultObj = obj || {degree:'',school:'',period:''};
+  const div = document.createElement('div');
+  div.className = 'list-item';
+  div.innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input type="text" placeholder="Degree (e.g. B.Tech)" class="edu-degree" value="${escapeHtml(defaultObj.degree)}" oninput="renderEducation()" />
+      <input type="text" placeholder="School / University" class="edu-school" value="${escapeHtml(defaultObj.school)}" oninput="renderEducation()" />
+      <input type="text" placeholder="Years (e.g. 2016–2020)" class="edu-period" value="${escapeHtml(defaultObj.period)}" oninput="renderEducation()" />
+      <button class="remove-btn" onclick="this.parentElement.parentElement.remove(); renderEducation()">✕</button>
+    </div>`;
+  container.appendChild(div);
+  renderEducation();
+}
+
+function renderEducation(){
+  const container = $('educationPreview');
+  container.innerHTML = '';
+  document.querySelectorAll('#eduList .list-item').forEach(node=>{
+    const deg = node.querySelector('.edu-degree').value.trim();
+    const sch = node.querySelector('.edu-school').value.trim();
+    const per = node.querySelector('.edu-period').value.trim();
+    const el = document.createElement('div');
+    el.className = 'edu';
+    el.innerHTML = `<div class="title">${escapeHtml(deg || 'Degree')}</div>
+                    <div class="meta">${escapeHtml(sch)} • ${escapeHtml(per)}</div>`;
+    container.appendChild(el);
+  });
+}
+
+/* ---------- Helpers ---------- */
+function escapeHtml(str){
+  if(!str) return '';
+  return str.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
+}
+
+/* ---------- Reset ---------- */
+function resetPreview(){
+  // clear inputs:
+  ['nameInput','titleInput','yearsInput','summaryInput','emailInput','phoneInput','locationInput'].forEach(id=>{
+    $(id).value = '';
+  });
+  $('skillsList').innerHTML=''; 
+  $('interestsList').innerHTML='';
+  $('languagesList').innerHTML='';
+  $('expList').innerHTML=''; 
+  $('eduList').innerHTML='';
+  $('photoImg').src=''; $('photoImg').style.display='none';
+  // set previews to defaults:
+  $('namePreview').textContent='Your Name';
+  $('rolePreview').textContent='Job Title';
+  $('yearsPreview').textContent='5 years';
+  $('summaryPreview').textContent='A short professional summary will show here. It outlines your main strengths, experience and what you do — concise & impactful.';
+  $('contactPreview').innerHTML='your.email@example.com<br>+91 98765 43210<br>City, Country';
+  renderSkills(); 
+  renderInterests();
+  renderLanguages();
+  renderExperience(); 
+  renderEducation();
+}
+
+/* ---------- PDF Export ---------- */
+function downloadPDF(){
+  // ensure resume content fits width on export
+  const opt = {
+    margin:       0.4,
+    filename:     'resume.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS:true },
+    jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+  };
+  const element = document.getElementById('paper');
+  // Temporarily remove the box-shadow for cleaner PDF
+  const oldShadow = element.style.boxShadow;
+  element.style.boxShadow = 'none';
+  html2pdf().set(opt).from(element).save().finally(()=>{ element.style.boxShadow = oldShadow; });
+}
+
+/* ---------- init with one sample item ---------- */
+addSkill('HTML'); addSkill('CSS'); addSkill('JavaScript');
+addInterest('Photography'); addInterest('Traveling');
+addLanguage('English'); addLanguage('Hindi');
+addExperience({title:'Frontend Developer',company:'Awesome Co',period:'2021 – Present',desc:'Built responsive interfaces and collaborated with product teams to ship new features.'});
+addEducation({degree:'B.Tech Computer Science',school:'XYZ University',period:'2016 – 2020'});
+renderSkills(); renderInterests(); renderLanguages(); renderExperience(); renderEducation();
+
+/* ---------- small improvement: press Enter to add ---------- */
+$('skillNew').addEventListener('keydown', function(ev){
+  if(ev.key === 'Enter'){ ev.preventDefault(); addSkill(); }
+});
+$('interestNew').addEventListener('keydown', function(ev){
+  if(ev.key === 'Enter'){ ev.preventDefault(); addInterest(); }
+});
+$('languageNew').addEventListener('keydown', function(ev){
+  if(ev.key === 'Enter'){ ev.preventDefault(); addLanguage(); }
+});
+</script>
+</body>
+</html>

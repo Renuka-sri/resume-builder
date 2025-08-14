@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Resume Builder</title>
+    <style>
+      body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-image: url("backgrd.jpg");
+      background-attachment: fixed;
+      background-size: cover;
+    }
+    header {
+      background-image: url(Gentle\ Abstract\ Blue\ Gradient\ Background\ for\ Elegant\ Designs-HD.webp);
+      background-attachment: fixed;
+      background-size: cover;
+      height: 8rem;
+      border: 5px solid rgb(211, gr232een, b245lue);
+      border-radius: 10px;
+      text-align: center;
+      padding-top: 1.5rem;
+      font-size: 2rem;
+      text-align: center;
+      text-shadow: 2px 5px rgb(117, 199, 172);
+      font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: rgb(24, 70, 92);
+    }
+    
+
+    #main {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 5rem;
+      height: 50vh;
+      position: relative;
+    }
+
+    .box {
+      width: 250px;
+      height: 350px;
+      border: 5px solid rgb(98, 158, 207);
+      border-radius: 10px;
+      box-sizing: border-box;
+      text-align: center;
+      padding: 10px;
+      background-color: white;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s ease;
+      position: relative;
+      z-index: 1;
+      background-color:rgb(231, 234, 245);
+    }
+
+    #modren {
+      transform: rotate(-5deg);
+    }
+
+    #Professional {
+      transform: rotate(0deg);
+    }
+
+    #CleanMinimal {
+      transform: rotate(5deg);
+    }
+
+    .box:hover {
+      transform: scale(1.08) rotate(0deg);
+      z-index: 2;
+    }
+
+    .imgs {
+      width: 100%;
+      height: 80%;
+      border-radius: 5px;
+      border-radius: 2%;
+    }
+    .name{
+
+      font-size:large;
+      font-family:'Times New Roman', Times, serif;
+      font-weight: bolder;
+      border: 2px solid rgb(50, 142, 170);
+      border-radius: 15px;
+      padding: 5px;
+      box-shadow: 10px lightblue;
+       box-shadow: 5px 5px lightcyan;
+    }
+      
+
+    @media (max-width: 768px) {
+        #main {
+          gap: 20px;
+        }
+        .box {
+          width: 200px;
+          height: 300px;
+        }
+        header {
+          font-size: 1.5rem;
+          height: auto;
+          padding: 1rem;
+        }
+      }
+
+      /* Mobile view */
+      @media (max-width: 480px) {
+        #main {
+          flex-direction: column;
+          align-items: center;
+          gap: 20px;
+        }
+        .box {
+          width: 80%;
+          height: auto;
+        }
+        .imgs {
+          height: auto;
+        }
+        header {
+          font-size: 1.2rem;
+          padding: 0.5rem;
+        }
+      }
+
+    @media (max-width: 768px) {
+      #modren,
+      #Professional,
+      #CleanMinimal {
+        transform: rotate(0deg);
+      }
+    }
+
+
+
+      
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1 class="Resume">Resume Builder</h1>
+    </header>
+    <div id="main">
+
+      <a href="templet1.html">
+        <div id="modren" class="box">
+          <p class="name">Modern </p>
+          <img class="imgs" src="modren1.jpg" alt="modren" height="300px">
+        </div>
+      </a>
+
+      <a href="templet2.html">
+        <div id="Professional" class="box">
+          <p class="name">Professional</p>
+          <img class="imgs" src="profficinal1.jpg" alt="modren" height="300px">
+        </div>
+      </a>
+      
+     <a href="templet3.html">
+      <div id="CleanMinimal" class="box">
+        <p class="name">Clean Minimal</p>
+         <img class="imgs" src="simple.jpg" alt="modren" height="300px">
+      </div>
+     </a>
+      
+      
+    
+    </div>
+  </body>
+</html>

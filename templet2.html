@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modern Resume Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        background-color: #f0f6fb;
+        display: flex;
+        flex-direction: row;
+        height: 100vh;
+    }
+    .form-section {
+        width: 35%;
+        overflow-y: auto;
+        background: #fff;
+        padding: 20px;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
+    .form-section h2 {
+        color: #2b6cb0;
+        border-bottom: 2px solid #bee3f8;
+        padding-bottom: 5px;
+        margin-top: 20px;
+    }
+    .form-section input, .form-section textarea {
+        width: 100%;
+        padding: 8px;
+        margin: 5px 0 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    .form-section button {
+        background: #2b6cb0;
+        color: #fff;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 5px;
+    }
+    .resume-preview {
+        width: 65%;
+        padding: 20px;
+        overflow-y: auto;
+        background: #f8fbff;
+    }
+    .resume {
+        max-width: 800px;
+        margin: auto;
+        background: #fff;
+        padding: 30px;
+        border: 2px solid #bee3f8;
+        border-radius: 10px;
+    }
+    .resume-header {
+        display: flex;
+        align-items: center;
+        border-bottom: 2px solid #bee3f8;
+        padding-bottom: 10px;
+    }
+    .resume-header img {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        margin-right: 20px;
+        object-fit: cover;
+    }
+    .resume-header h1 {
+        margin: 0;
+        color: #2b6cb0;
+    }
+    .section {
+        margin-top: 15px;
+    }
+    .section h3 {
+        color: #2b6cb0;
+        border-bottom: 1px solid #bee3f8;
+        padding-bottom: 5px;
+    }
+    .exp-item, .edu-item, .proj-item, .cert-item, .lang-item, .skill-item, .int-item {
+        margin-bottom: 8px;
+    }
+
+    /* Responsive layout — stack vertically on smaller screens */
+@media (max-width: 1024px) {
+    body {
+        flex-direction: column; /* Switch from side-by-side to stacked */
+        height: auto;           /* Let height grow naturally */
+    }
+
+    .form-section,
+    .resume-preview {
+        width: 100%;            /* Full width each */
+        height: auto;           /* No fixed height */
+        max-height: none;       /* Allow content to expand */
+    }
+
+    .form-section {
+        box-shadow: none;       /* Remove divider shadow when stacked */
+        border-bottom: 2px solid #bee3f8;
+    }
+}
+
+@media (max-width: 600px) {
+    .form-section, .resume-preview {
+        padding: 15px;
+    }
+}
+
+</style>
+</head>
+<body>
+
+<div class="form-section">
+    <h2>Personal Info</h2>
+    <input type="file" id="photo">
+    <input type="text" id="name" placeholder="Full Name">
+    <input type="text" id="title" placeholder="Job Title">
+    <input type="email" id="email" placeholder="Email">
+    <input type="text" id="phone" placeholder="Phone">
+    <input type="text" id="address" placeholder="Address">
+    <input type="text" id="website" placeholder="Website">
+    <input type="text" id="linkedin" placeholder="LinkedIn">
+    <input type="text" id="github" placeholder="GitHub">
+    
+    <h2>Objective</h2>
+    <textarea id="about" placeholder="Write a short bio"></textarea>
+    
+    <h2>Experience</h2>
+    <div id="experience-fields"></div>
+    <button onclick="addExperience()">+ Add Experience</button>
+
+    <h2>Education</h2>
+    <div id="education-fields"></div>
+    <button onclick="addEducation()">+ Add Education</button>
+
+    <h2>Projects</h2>
+    <div id="projects-fields"></div>
+    <button onclick="addProject()">+ Add Project</button>
+
+    <h2>Skills</h2>
+    <div id="skills-fields"></div>
+    <button onclick="addSkill()">+ Add Skill</button>
+
+     <h2>Links</h2>
+    <div id="links-fields"></div>
+    <button onclick="addLink()">+ Add Link</button>
+
+
+    <h2>Certifications</h2>
+    <div id="certifications-fields"></div>
+    <button onclick="addCertification()">+ Add Certification</button>
+
+    <h2>Languages</h2>
+    <div id="languages-fields"></div>
+    <button onclick="addLanguage()">+ Add Language</button>
+
+   
+    
+    <h2>Interests</h2>
+    <div id="interests-fields"></div>
+    <button onclick="addInterest()">+ Add Interest</button>
+
+    <hr>
+    <button onclick="downloadPDF()">Download PDF</button>
+</div>
+
+<div class="resume-preview" id="resume-preview">
+    <div class="resume" id="resume">
+        <div class="resume-header">
+            <img id="preview-photo" src="" alt="Profile Photo">
+            <div>
+                <h1 id="preview-name">Your Name</h1>
+                <p id="preview-title">Job Title</p>
+                <div id="preview-contact"></div>
+
+            </div>
+        </div>
+        <div class="section" id="preview-about-section">
+            <h3>Objective</h3>
+            <p id="preview-about"></p>
+        </div>
+        <div class="section" id="preview-experience-section">
+            <h3>Experience</h3>
+            <div id="preview-experience"></div>
+        </div>
+        <div class="section" id="preview-education-section">
+            <h3>Education</h3>
+            <div id="preview-education"></div>
+        </div>
+        <div class="section" id="preview-projects-section">
+            <h3>Projects</h3>
+            <div id="preview-projects"></div>
+        </div>
+        <div class="section" id="preview-skills-section">
+            <h3>Skills</h3>
+            <ul id="preview-skills"></ul>
+        </div>
+
+         <div class="section" id="preview-links-section">
+            <h3>Links</h3>
+            <ul id="preview-links"></ul>
+        </div>
+
+        <div class="section" id="preview-certifications-section">
+            <h3>Certifications</h3>
+            <ul id="preview-certifications"></ul>
+        </div>
+        <div class="section" id="preview-languages-section">
+            <h3>Languages</h3>
+            <ul id="preview-languages"></ul>
+        </div>
+
+       
+
+        <div class="section" id="preview-interests-section">
+            <h3>Interests</h3>
+            <ul id="preview-interests"></ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('#name, #title, #email, #phone, #address, #website, #linkedin, #github, #about')
+        .forEach(input => {
+            input.addEventListener('input', updatePreview);
+        });
+
+    document.getElementById('photo').addEventListener('change', function(){
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('preview-photo').src = e.target.result;
+        }
+        reader.readAsDataURL(this.files[0]);
+    });
+    function updatePreview() {
+        document.getElementById('preview-name').innerText = document.getElementById('name').value || 'Your Name';
+        document.getElementById('preview-title').innerText = document.getElementById('title').value || 'Job Title';
+
+        let contactHTML = '';
+
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone').value;
+        const address = document.getElementById('address').value;
+        const website = document.getElementById('website').value;
+        const linkedin = document.getElementById('linkedin').value;
+        const github = document.getElementById('github').value;
+
+        if (email) contactHTML += `<span>${email}</span> | `;
+        if (phone) contactHTML += `<span>${phone}</span> | `;
+        if (address) contactHTML += `<span>${address}</span> | `;
+        if (website) contactHTML += `<a href="${website.startsWith('http') ? website : 'https://' + website}" target="_blank">Website</a> | `;
+        if (linkedin) contactHTML += `<a href="${linkedin.startsWith('http') ? linkedin : 'https://' + linkedin}" target="_blank">LinkedIn</a> | `;
+        if (github) contactHTML += `<a href="${github.startsWith('http') ? github : 'https://' + github}" target="_blank">GitHub</a>`;
+
+        // Remove trailing pipe if present
+        contactHTML = contactHTML.replace(/\| $/, '');
+
+        document.getElementById('preview-contact').innerHTML = contactHTML;
+
+        document.getElementById('preview-about').innerText = document.getElementById('about').value;
+    }
+
+
+    function addExperience() {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <input type="text" placeholder="Job Title" oninput="renderExperience()">
+            <input type="text" placeholder="Company" oninput="renderExperience()">
+            <input type="text" placeholder="Start Date" oninput="renderExperience()">
+            <input type="text" placeholder="End Date" oninput="renderExperience()">
+            <textarea placeholder="Description" oninput="renderExperience()"></textarea>
+            <button onclick="this.parentElement.remove(); renderExperience()">Remove</button>
+        `;
+        document.getElementById('experience-fields').appendChild(div);
+    }
+    function renderExperience() {
+        const container = document.getElementById('preview-experience');
+        container.innerHTML = '';
+        document.querySelectorAll('#experience-fields > div').forEach(exp => {
+            const [title, company, start, end, desc] = exp.querySelectorAll('input, textarea');
+            container.innerHTML += `<div class="exp-item"><strong>${title.value}</strong>, ${company.value} (${start.value} - ${end.value})<br>${desc.value}</div>`;
+        });
+    }
+
+    function addEducation() {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <input type="text" placeholder="Degree" oninput="renderEducation()">
+            <input type="text" placeholder="School" oninput="renderEducation()">
+            <input type="text" placeholder="Year" oninput="renderEducation()">
+            <button onclick="this.parentElement.remove(); renderEducation()">Remove</button>
+        `;
+        document.getElementById('education-fields').appendChild(div);
+    }
+    function renderEducation() {
+        const container = document.getElementById('preview-education');
+        container.innerHTML = '';
+        document.querySelectorAll('#education-fields > div').forEach(edu => {
+            const [degree, school, year] = edu.querySelectorAll('input');
+            container.innerHTML += `<div class="edu-item"><strong>${degree.value}</strong> - ${school.value} (${year.value})</div>`;
+        });
+    }
+
+    function addProject() {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <input type="text" placeholder="Project Title" oninput="renderProjects()">
+            <textarea placeholder="Description" oninput="renderProjects()"></textarea>
+            <button onclick="this.parentElement.remove(); renderProjects()">Remove</button>
+        `;
+        document.getElementById('projects-fields').appendChild(div);
+    }
+    function renderProjects() {
+        const container = document.getElementById('preview-projects');
+        container.innerHTML = '';
+        document.querySelectorAll('#projects-fields > div').forEach(proj => {
+            const [title, desc] = proj.querySelectorAll('input, textarea');
+            container.innerHTML += `<div class="proj-item"><strong>${title.value}</strong>: ${desc.value}</div>`;
+        });
+    }
+
+    function addSkill() {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <input type="text" placeholder="Skill" oninput="renderSkills()">
+            <button onclick="this.parentElement.remove(); renderSkills()">Remove</button>
+        `;
+        document.getElementById('skills-fields').appendChild(div);
+    }
+    function renderSkills() {
+        const container = document.getElementById('preview-skills');
+        container.innerHTML = '';
+        document.querySelectorAll('#skills-fields > div').forEach(skill => {
+            const [name] = skill.querySelectorAll('input');
+            if (name.value) container.innerHTML += `<li>${name.value}</li>`;
+        });
+    }
+
+    function addCertification() {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <input type="text" placeholder="Certification" oninput="renderCertifications()">
+            <button onclick="this.parentElement.remove(); renderCertifications()">Remove</button>
+        `;
+        document.getElementById('certifications-fields').appendChild(div);
+    }
+    function renderCertifications() {
+        const container = document.getElementById('preview-certifications');
+        container.innerHTML = '';
+        document.querySelectorAll('#certifications-fields > div').forEach(cert => {
+            const [name] = cert.querySelectorAll('input');
+            if (name.value) container.innerHTML += `<li>${name.value}</li>`;
+        });
+    }
+
+    function addLanguage() {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <input type="text" placeholder="Language" oninput="renderLanguages()">
+            <button onclick="this.parentElement.remove(); renderLanguages()">Remove</button>
+        `;
+        document.getElementById('languages-fields').appendChild(div);
+    }
+    function renderLanguages() {
+        const container = document.getElementById('preview-languages');
+        container.innerHTML = '';
+        document.querySelectorAll('#languages-fields > div').forEach(lang => {
+            const [name] = lang.querySelectorAll('input');
+            if (name.value) container.innerHTML += `<li>${name.value}</li>`;
+        });
+    }
+
+    function addLink() {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <input type="text" placeholder="Platform Name (e.g., HackerRank)" oninput="renderLinks()">
+            <input type="text" placeholder="Profile URL" oninput="renderLinks()">
+            <button onclick="this.parentElement.remove(); renderLinks()">Remove</button>
+        `;
+        document.getElementById('links-fields').appendChild(div);
+    }
+
+    function renderLinks() {
+            const container = document.getElementById('preview-links');
+            container.innerHTML = '';
+            document.querySelectorAll('#links-fields > div').forEach(linkDiv => {
+                const [platform, url] = linkDiv.querySelectorAll('input');
+                if (platform.value && url.value) {
+                    const fullURL = url.value.startsWith('http') ? url.value : 'https://' + url.value;
+                    container.innerHTML += `<li><a href="${fullURL}" target="_blank">${platform.value}</a></li>`;
+                }
+            });
+        }
+
+
+    function addInterest() {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <input type="text" placeholder="Interest" oninput="renderInterests()">
+            <button onclick="this.parentElement.remove(); renderInterests()">Remove</button>
+        `;
+        document.getElementById('interests-fields').appendChild(div);
+    }
+
+    
+
+    function renderInterests() {
+        const container = document.getElementById('preview-interests');
+        container.innerHTML = '';
+        document.querySelectorAll('#interests-fields > div').forEach(int => {
+            const [name] = int.querySelectorAll('input');
+            if (name.value) container.innerHTML += `<li>${name.value}</li>`;
+        });
+    }
+
+    function downloadPDF() {
+        const element = document.getElementById('resume');
+        html2pdf().from(element).set({
+            margin: 0.5,
+            filename: 'resume.pdf',
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        }).save();
+
+        
+    }
+</script>
+
+</body>
+</html>

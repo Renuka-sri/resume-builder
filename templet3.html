@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dynamic Resume Builder — Delete/Restore Sections</title>
+<style>
+  :root { --bg:#f4f4f4; --ink:#2c3e50; --muted:#555; --chip:#e3f0ff; }
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 20px;
+    display: flex; gap: 20px; background-color: var(--bg);
+  }
+  .form-section, .resume-section {
+    background:#fff; padding:20px; border-radius:10px;
+    box-shadow:0 0 10px rgba(0,0,0,.1);
+    overflow-y:auto; max-height:90vh;
+  }
+  .form-section { width:40%; }
+  .resume-section { width:60%; }
+  h2 { margin:0 0 12px; color:#333; }
+  label { display:block; margin-top:12px; font-weight:700; }
+  input, textarea {
+    width:100%; padding:8px; margin-top:6px;
+    border:1px solid #ccc; border-radius:6px; font-size:14px;
+  }
+  textarea { min-height:70px; resize:vertical; }
+  .add-btn, .small-btn, .primary-btn, .delete-btn {
+    background:#007bff; border:none; color:#fff; cursor:pointer;
+    border-radius:6px; transition:.15s transform ease;
+  }
+  .add-btn { font-size:20px; width:40px; height:40px; margin-top:8px; }
+  .primary-btn { padding:10px 14px; font-weight:700; }
+  .small-btn { padding:6px 10px; font-size:13px; }
+  .delete-btn { padding:4px 8px; font-size:12px; background:#d9534f; }
+  .add-row { display:flex; gap:8px; align-items:flex-start; }
+  .list-container { margin-top:10px; }
+  .list-item {
+    background:var(--chip); padding:8px 36px 8px 10px;
+    border-radius:10px; margin:6px 0; position:relative; font-size:14px;
+  }
+  .list-item .remove {
+    position:absolute; right:8px; top:4px; background:transparent;
+    border:none; color:#d00; font-size:20px; cursor:pointer;
+  }
+
+  /* Resume header & sections */
+  .resume-header {
+    text-align:center; border-bottom:2px solid #333;
+    padding-bottom:10px; margin-bottom:18px;
+  }
+  .resume-header h1 { margin:0; font-size:26px; color:var(--ink); }
+  .resume-header p { margin:4px 0; color:var(--muted); font-size:14px; }
+  .section-wrap { margin: 14px 0; }
+  .section-head {
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid #ccc; padding-bottom:6px; color:var(--ink);
+  }
+  .section-head h3 { margin:0; font-size:18px; }
+  .entry { margin:8px 0; }
+  .entry-title { font-weight:700; }
+  .entry-desc { font-size:13px; color:#333; margin-top:2px; }
+
+  /* Toolbar */
+  .toolbar { display:flex; gap:10px; align-items:center; margin-top:14px;
+    position:sticky; top:0; background:#fff; padding-bottom:10px; z-index:2; }
+
+  /* Print: only resume pane */
+/* Stack preview BELOW the form on tablets & mobiles */
+@media (max-width: 1024px) {
+  body {
+    flex-direction: column;   /* row -> column */
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .form-section,
+  .resume-section {
+    width: 100%;
+    max-height: none;         /* let them grow vertically */
+  }
+}
+
+/* Tighter spacing on small phones */
+@media (max-width: 600px) {
+  body { padding: 12px; gap: 12px; }
+  .form-section, .resume-section { padding: 16px; }
+}
+
+
+  
+</style>
+</head>
+<body>
+
+<!-- LEFT: Form -->
+<div class="form-section">
+  <h2>Fill Your Details</h2>
+
+  <label>Full Name</label>
+  <input id="nameInput" placeholder="Your Name" oninput="updatePreview()" />
+
+  <label>Email</label>
+  <input id="emailInput" type="email" placeholder="you@example.com" oninput="updatePreview()" />
+
+  <label>Phone</label>
+  <input id="phoneInput" placeholder="+91-XXXXXXXXXX" oninput="updatePreview()" />
+
+  <label>Summary</label>
+  <textarea id="summaryInput" placeholder="A short professional summary..." oninput="updatePreview()"></textarea>
+
+  <!-- Education -->
+  <label>Education</label>
+  <input id="eduTitle" placeholder="Degree / Course (e.g., B.Tech CSE — 2025)" />
+  <textarea id="eduDesc" placeholder="Institute, CGPA/Percentage, Highlights"></textarea>
+  <button class="add-btn" onclick="addEducation()">+</button>
+  <div id="educationList" class="list-container"></div>
+
+  <!-- Skills (heading + description) -->
+  <label>Skills</label>
+  <input id="skillHeading" placeholder="Heading (e.g., Programming Skills)" />
+  <textarea id="skillDesc" placeholder="Description (e.g., Programming Languages: Python, C, C++, Java)"></textarea>
+  <button class="add-btn" onclick="addSkill()">+</button>
+  <div id="skillsList" class="list-container"></div>
+
+  <!-- Projects -->
+  <label>Projects</label>
+  <input id="projTitle" placeholder="Project Title" />
+  <textarea id="projDesc" placeholder="Tech stack, features, outcome"></textarea>
+  <button class="add-btn" onclick="addProject()">+</button>
+  <div id="projectsList" class="list-container"></div>
+
+  <!-- Certifications -->
+  <label>Certifications</label>
+  <input id="certTitle" placeholder="Certificate Title" />
+  <textarea id="certDesc" placeholder="Issuer, year, brief note"></textarea>
+  <button class="add-btn" onclick="addCert()">+</button>
+  <div id="certList" class="list-container"></div>
+
+  <!-- Experience -->
+  <label>Experience</label>
+  <input id="expTitle" placeholder="Role @ Company (e.g., Web Dev Intern @ ABC)" />
+  <textarea id="expDesc" placeholder="Duration, responsibilities, impact"></textarea>
+  <button class="add-btn" onclick="addExperience()">+</button>
+  <div id="experienceList" class="list-container"></div>
+
+  <!-- Achievements -->
+  <label>Achievements</label>
+  <input id="achHeading" placeholder="Heading (e.g., Hackathons / Awards)" />
+  <textarea id="achDesc" placeholder="Description (e.g., Winner — Smart India Hackathon 2024)"></textarea>
+  <button class="add-btn" onclick="addAchievement()">+</button>
+  <div id="achievementList" class="list-container"></div>
+
+  <!-- Hobbies (simple list) -->
+  <label>Hobbies</label>
+  <div class="add-row">
+    <input id="hobbyInput" placeholder="Add a hobby (e.g., Photography)" />
+    <button class="small-btn" onclick="addHobby()">Add</button>
+  </div>
+  <div id="hobbyList" class="list-container"></div>
+
+  <!-- Actions -->
+  <div class="toolbar">
+    <button class="primary-btn" onclick="downloadPDF()">Download PDF</button>
+    <button class="small-btn" onclick="scrollToPreview()">Jump to Preview</button>
+    <button class="small-btn" onclick="resetForm()">Reset</button>
+  </div>
+</div>
+
+<!-- RIGHT: Resume Preview -->
+<div class="resume-section" id="resume">
+
+  <div class="resume-header">
+    <h1 id="nameDisplay">Your Name</h1>
+    <p id="emailDisplay">you@example.com</p>
+    <p id="phoneDisplay">+91-XXXXXXXXXX</p>
+  </div>
+
+  <!-- Summary -->
+  <div class="section-wrap" id="wrap-summary" data-section="summary">
+    <div class="section-head">
+      <h3>Summary</h3>
+      <button class="delete-btn" onclick="deleteSection('summary')">🗑 Delete</button>
+    </div>
+    <div id="summaryDisplay" class="entry-desc">A short professional summary...</div>
+  </div>
+
+  <!-- Education -->
+  <div class="section-wrap" id="wrap-education" data-section="education">
+    <div class="section-head">
+      <h3>Education</h3>
+      <button class="delete-btn" onclick="deleteSection('education')">🗑 Delete</button>
+    </div>
+    <div id="educationDisplay"></div>
+  </div>
+
+  <!-- Skills -->
+  <div class="section-wrap" id="wrap-skills" data-section="skills">
+    <div class="section-head">
+      <h3>Skills</h3>
+      <button class="delete-btn" onclick="deleteSection('skills')">🗑 Delete</button>
+    </div>
+    <div id="skillsDisplay"></div>
+  </div>
+
+  <!-- Projects -->
+  <div class="section-wrap" id="wrap-projects" data-section="projects">
+    <div class="section-head">
+      <h3>Projects</h3>
+      <button class="delete-btn" onclick="deleteSection('projects')">🗑 Delete</button>
+    </div>
+    <div id="projectsDisplay"></div>
+  </div>
+
+  <!-- Certifications -->
+  <div class="section-wrap" id="wrap-certifications" data-section="certifications">
+    <div class="section-head">
+      <h3>Certifications</h3>
+      <button class="delete-btn" onclick="deleteSection('certifications')">🗑 Delete</button>
+    </div>
+    <div id="certDisplay"></div>
+  </div>
+
+  <!-- Experience -->
+  <div class="section-wrap" id="wrap-experience" data-section="experience">
+    <div class="section-head">
+      <h3>Experience</h3>
+      <button class="delete-btn" onclick="deleteSection('experience')">🗑 Delete</button>
+    </div>
+    <div id="experienceDisplay"></div>
+  </div>
+
+  <!-- Achievements -->
+  <div class="section-wrap" id="wrap-achievements" data-section="achievements">
+    <div class="section-head">
+      <h3>Achievements</h3>
+      <button class="delete-btn" onclick="deleteSection('achievements')">🗑 Delete</button>
+    </div>
+    <div id="achievementDisplay"></div>
+  </div>
+
+  <!-- Hobbies -->
+  <div class="section-wrap" id="wrap-hobbies" data-section="hobbies">
+    <div class="section-head">
+      <h3>Hobbies</h3>
+      <button class="delete-btn" onclick="deleteSection('hobbies')">🗑 Delete</button>
+    </div>
+    <div id="hobbyDisplay"></div>
+  </div>
+
+</div>
+
+<script>
+  /* ===== Utilities ===== */
+  const byId = id => document.getElementById(id);
+
+  function downloadPDF(){ window.print(); }
+  function scrollToPreview(){ byId('resume').scrollIntoView({behavior:'smooth'}); }
+
+  /* ===== Hidden/visible state per section ===== */
+  const hiddenSections = {
+    summary: false,
+    education: false,
+    skills: false,
+    projects: false,
+    certifications: false,
+    experience: false,
+    achievements: false,
+    hobbies: false,
+  };
+
+  function deleteSection(key){
+    hiddenSections[key] = true;
+    refreshVisibility();
+  }
+  function showSection(key){
+    hiddenSections[key] = false;
+    refreshVisibility();
+  }
+
+  /* ===== Live header fields ===== */
+  function updatePreview(){
+    byId("nameDisplay").textContent  = byId("nameInput").value.trim()  || "Your Name";
+    byId("emailDisplay").textContent = byId("emailInput").value.trim() || "you@example.com";
+    byId("phoneDisplay").textContent = byId("phoneInput").value.trim() || "+91-XXXXXXXXXX";
+
+    const sum = byId("summaryInput").value.trim();
+    byId("summaryDisplay").textContent = sum || "A short professional summary...";
+    if(sum) showSection('summary'); // re-appear if user types again
+    refreshVisibility();
+  }
+
+  /* ===== Section data managers (title + description) ===== */
+  function makeEntryHTML(title, desc){
+    const wrap = document.createElement('div');
+    wrap.className = 'entry';
+    if(title){
+      const t = document.createElement('div');
+      t.className = 'entry-title';
+      t.textContent = title;
+      wrap.appendChild(t);
+    }
+    if(desc){
+      const d = document.createElement('div');
+      d.className = 'entry-desc';
+      d.textContent = desc;
+      wrap.appendChild(d);
+    }
+    return wrap;
+  }
+
+  function managerTitleDesc(titleId, descId, listId, previewId, sectionKey){
+    const data = [];
+    return {
+      add(){
+        const title = byId(titleId).value.trim();
+        const desc  = byId(descId).value.trim();
+        if(!title) return;
+        data.push({title, desc});
+        byId(titleId).value=''; byId(descId).value='';
+        this.render();
+        showSection(sectionKey); // re-show if previously deleted
+      },
+      remove(i){ data.splice(i,1); this.render(); refreshVisibility(); },
+      hasContent(){ return data.length > 0; },
+      render(){
+        const list = byId(listId); list.innerHTML = '';
+        const prev = byId(previewId); prev.innerHTML = '';
+        data.forEach((item, i)=>{
+          const li = document.createElement('div');
+          li.className = 'list-item';
+          li.innerHTML = `<strong>${item.title}</strong>${item.desc?`<div>${item.desc}</div>`:''}`;
+          const rm = document.createElement('button'); rm.className='remove'; rm.textContent='×';
+          rm.onclick = ()=> this.remove(i);
+          li.appendChild(rm);
+          list.appendChild(li);
+
+          prev.appendChild(makeEntryHTML(item.title, item.desc));
+        });
+        refreshVisibility();
+      }
+    };
+  }
+
+  /* Managers for all structured sections */
+  const educationMgr    = managerTitleDesc('eduTitle','eduDesc','educationList','educationDisplay','education');
+  const skillsMgr       = managerTitleDesc('skillHeading','skillDesc','skillsList','skillsDisplay','skills');
+  const projectsMgr     = managerTitleDesc('projTitle','projDesc','projectsList','projectsDisplay','projects');
+  const certsMgr        = managerTitleDesc('certTitle','certDesc','certList','certDisplay','certifications');
+  const expMgr          = managerTitleDesc('expTitle','expDesc','experienceList','experienceDisplay','experience');
+  const achievementsMgr = managerTitleDesc('achHeading','achDesc','achievementList','achievementDisplay','achievements');
+
+  /* ===== Hobbies (simple list) ===== */
+  const hobbies = [];
+  function addHobby(){
+    const input = byId('hobbyInput');
+    const val = input.value.trim();
+    if(!val) return;
+    hobbies.push(val);
+    input.value = '';
+    renderHobbies();
+    showSection('hobbies');
+  }
+  function removeHobby(i){ hobbies.splice(i,1); renderHobbies(); refreshVisibility(); }
+  function renderHobbies(){
+    const list = byId('hobbyList'); list.innerHTML = '';
+    const prev = byId('hobbyDisplay'); prev.innerHTML = '';
+    if(hobbies.length){
+      const ul = document.createElement('ul');
+      hobbies.forEach((h, i)=>{
+        const liForm = document.createElement('div');
+        liForm.className = 'list-item';
+        liForm.textContent = h;
+        const rm = document.createElement('button'); rm.className='remove'; rm.textContent='×';
+        rm.onclick = ()=> removeHobby(i);
+        liForm.appendChild(rm);
+        list.appendChild(liForm);
+
+        const li = document.createElement('li'); li.textContent = h; ul.appendChild(li);
+      });
+      prev.appendChild(ul);
+    }
+  }
+
+  /* ===== Visibility logic =====
+     Show a section if:
+       - It's not marked hidden, AND
+       - It has content (summary text, manager has items, or hobbies list length)
+  */
+  function sectionHasContent(key){
+    switch(key){
+      case 'summary': return byId('summaryInput').value.trim().length > 0;
+      case 'education': return educationMgr.hasContent();
+      case 'skills': return skillsMgr.hasContent();
+      case 'projects': return projectsMgr.hasContent();
+      case 'certifications': return certsMgr.hasContent();
+      case 'experience': return expMgr.hasContent();
+      case 'achievements': return achievementsMgr.hasContent();
+      case 'hobbies': return hobbies.length > 0;
+      default: return false;
+    }
+  }
+
+  function refreshVisibility(){
+    Object.keys(hiddenSections).forEach(key=>{
+      const wrap = byId('wrap-' + key);
+      if(!wrap) return;
+      const shouldShow = !hiddenSections[key] && sectionHasContent(key);
+      wrap.style.display = shouldShow ? '' : 'none';
+    });
+  }
+
+  /* ===== Add hooks ===== */
+  function addEducation(){ educationMgr.add(); }
+  function addSkill(){ skillsMgr.add(); }
+  function addProject(){ projectsMgr.add(); }
+  function addCert(){ certsMgr.add(); }
+  function addExperience(){ expMgr.add(); }
+  function addAchievement(){ achievementsMgr.add(); }
+
+  /* Enter-to-add shortcuts */
+  function addOnEnter(id, handler){
+    const el = byId(id);
+    el.addEventListener('keydown', e=>{
+      if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); handler(); }
+    });
+  }
+  // Education
+  addOnEnter('eduTitle', addEducation); addOnEnter('eduDesc', addEducation);
+  // Skills
+  addOnEnter('skillHeading', addSkill); addOnEnter('skillDesc', addSkill);
+  // Projects
+  addOnEnter('projTitle', addProject); addOnEnter('projDesc', addProject);
+  // Certifications
+  addOnEnter('certTitle', addCert); addOnEnter('certDesc', addCert);
+  // Experience
+  addOnEnter('expTitle', addExperience); addOnEnter('expDesc', addExperience);
+  // Achievements
+  addOnEnter('achHeading', addAchievement); addOnEnter('achDesc', addAchievement);
+  // Hobby
+  byId('hobbyInput').addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ e.preventDefault(); addHobby(); }
+  });
+
+  /* ===== Reset (keeps deleted state off) ===== */
+  function resetForm(){
+    if(!confirm('Clear all inputs and preview?')) return;
+    // Clear inputs
+    [
+      'nameInput','emailInput','phoneInput','summaryInput',
+      'eduTitle','eduDesc','skillHeading','skillDesc','projTitle','projDesc',
+      'certTitle','certDesc','expTitle','expDesc','achHeading','achDesc','hobbyInput'
+    ].forEach(id=>{ const el = byId(id); if(el) el.value=''; });
+
+    // Clear UI lists and preview
+    ['educationList','skillsList','projectsList','certList','experienceList','achievementList','hobbyList',
+     'educationDisplay','skillsDisplay','projectsDisplay','certDisplay','experienceDisplay','achievementDisplay','hobbyDisplay']
+     .forEach(id=> byId(id).innerHTML='');
+
+    // Clear data arrays by reloading page-level structures
+    hobbies.length = 0;
+
+    // Reset hidden flags
+    Object.keys(hiddenSections).forEach(k=> hiddenSections[k] = false);
+
+    updatePreview();
+    refreshVisibility();
+  }
+
+  // Init
+  updatePreview();
+  refreshVisibility();
+</script>
+
+</body>
+</html>
